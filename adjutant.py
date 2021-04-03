@@ -1,9 +1,10 @@
-import os
 import asyncio
+import subprocess
+import os
+from dotenv import load_dotenv
 
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
 import random
 
 load_dotenv()
@@ -14,12 +15,14 @@ with open('online.png', 'rb') as f:
 with open('offline.png', 'rb') as f:
     icon_offline = f.read()
 
+
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
 server_guild = None
-server_ip = "127.0.0.1"
+server_ip = "172.26.111.92"
 server_status = "OFFLINE"
 server_save = None
+server_instance = None
 
 
 @bot.event
@@ -38,18 +41,37 @@ async def on_ready():
 async def server(ctx, action='', save=None):
     global server_status
     global server_save
+    global server_instance
     if action == "start":
         if save:
             await ctx.send(f"```fix\nStarting Factorio server with save: '{save}'\n```")
+            server_instance = subprocess.Popen(["../factorio", "--start-server", f"../saves/{save}.zip", "--server-settings", "./server-settings.json"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            server_instance.poll()
+            await asyncio.sleep(9)
+            print("Server Up")
             server_save = save
+            server_status = "ONLINE"
+            await server_guild.edit(icon=icon_online)
+            await ctx.send("```xl\n'SERVER ONLINE'\n```")
+        elif server_save:
+            await ctx.send(f"```fix\nStarting Factorio server with save: '{server_save}'\n```")
+            server_instance = subprocess.Popen(["../factorio", "--start-server", f"../saves/{server_save}.zip", "--server-settings", "./server-settings.json"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            server_instance.poll()
+            await asyncio.sleep(7)
+            print("Server Up")
             server_status = "ONLINE"
             await server_guild.edit(icon=icon_online)
             await ctx.send("```xl\n'SERVER ONLINE'\n```")
         else:
             await ctx.send("```prolog\nSave File Not Specified\n```")
 
-    elif action == "stop":
+    elif action == "stop" and server_status == "ONLINE":
         await ctx.send(f"```fix\nStopping Factorio server\n```")
+        server_instance.stdin.write('/c game.server_save()')
+        server_instance.stdin.flush()
+        await asyncio.sleep(2)
+        server_instance.kill()
+        print("Server Down")
         server_status = "OFFLINE"
         await server_guild.edit(icon=icon_offline)
         await ctx.send("```prolog\nSERVER OFFLINE\n```")
@@ -66,7 +88,6 @@ async def server(ctx, action='', save=None):
 
 @bot.event
 async def on_member_join(member):
-    await member.send(f"```\n1010101010000110011011111\n```")
     await member.send(f"```fix\nДобро пожаловать на Factorizon!\n```")
     await member.send(f"```fix\nДля соедниения с сервером используйте 'zerotier'\n```")
     await member.send(f"https://www.zerotier.com/download/")
@@ -77,14 +98,22 @@ async def on_member_join(member):
 
 
 @bot.command(name="status")
-async def server(ctx):
+async def status(ctx):
     if server_status == "ONLINE":
         await ctx.send(f"```xl\n'Status: {server_status}, Ip: {server_ip}, Save: {server_save}'\n```")
     if server_status == "OFFLINE":
         await ctx.send(f"```prolog\nStatus: {server_status}, Ip: {server_ip}, Save: {server_save}\n```")
 
 
-
+@bot.command(name="console", pass_context=True)
+@commands.has_permissions(administrator=True)
+async def console(ctx, *args):
+    global server_instance
+    if server_status == "ONLINE":
+        server_instance.stdin.write(' '.join(list(args)))
+        server_instance.stdin.flush()
+    if server_status == "OFFLINE":
+        await ctx.send(f"```prolog\nERROR: SERVER OFFLINE\n```")
 
 
 
