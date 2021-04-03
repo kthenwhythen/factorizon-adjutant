@@ -97,7 +97,7 @@ async def on_member_join(member):
     await member.send(f"```fix\nIP адрес сервера можно узнать через команду !status\n```")
 
 
-@bot.command(name="status")
+@bot.command(aliases=["status", "s"])
 async def status(ctx):
     if server_status == "ONLINE":
         await ctx.send(f"```xl\n'Status: {server_status}, Ip: {server_ip}, Save: {server_save}'\n```")
@@ -105,7 +105,7 @@ async def status(ctx):
         await ctx.send(f"```prolog\nStatus: {server_status}, Ip: {server_ip}, Save: {server_save}\n```")
 
 
-@bot.command(name="console", pass_context=True)
+@bot.command(aliases=["console", "c"], pass_context=True)
 @commands.has_permissions(administrator=True)
 async def console(ctx, *args):
     global server_instance
