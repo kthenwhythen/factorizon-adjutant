@@ -116,24 +116,4 @@ async def console(ctx, *args):
         await ctx.send(f"```prolog\nERROR: SERVER OFFLINE\n```")
 
 
-
-########## Fun
-@bot.command(aliases=["vanyapidor"])
-async def toxic(message):
-    await message.channel.send(f"```fix\n{random.choice(['Agree', 'Yes', 'Exactly', '+'])}\n```")
-
-
-@bot.command(aliases=["albertpidor"])
-async def toxic_counter(message):
-    await message.channel.send(f"```prolog\nProceeding To Ban User: '{message.author.name}'\n```")
-    await asyncio.sleep(3)
-    await message.channel.send("```fix\nin 1\n```")
-    await asyncio.sleep(1)
-    await message.channel.send("```fix\n2\n```")
-    await asyncio.sleep(1)
-    await message.channel.send("```fix\n3\n```")
-    await asyncio.sleep(1)
-    await message.channel.send("```Deactivated```")
-
-
 bot.run(TOKEN)
