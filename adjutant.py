@@ -110,7 +110,17 @@ async def status(ctx):
 async def console(ctx, *args):
     global server_instance
     if server_status == "ONLINE":
-        server_instance.stdin.write(' '.join(list(args)))
+        server_instance.stdin.write(" ".join(list(args)).replace("'", '\"'))
+        server_instance.stdin.flush()
+    if server_status == "OFFLINE":
+        await ctx.send(f"```prolog\nERROR: SERVER OFFLINE\n```")
+
+
+@bot.command(aliases=["tp"], pass_context=True)
+async def teleport(ctx, *args):
+    global server_instance
+    if server_status == "ONLINE":
+        server_instance.stdin.write(f"/c game.players[\"{args[0]}\"]" + ".teleport({-15325, 9373})")
         server_instance.stdin.flush()
     if server_status == "OFFLINE":
         await ctx.send(f"```prolog\nERROR: SERVER OFFLINE\n```")
