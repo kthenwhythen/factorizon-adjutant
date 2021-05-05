@@ -1,6 +1,7 @@
 import asyncio
 import subprocess
 import os
+import sys
 from dotenv import load_dotenv
 
 import discord
@@ -19,7 +20,7 @@ with open('offline.png', 'rb') as f:
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
 server_guild = None
-server_ip = "172.26.111.92"
+server_ip = "172.26.254.246"
 server_status = "OFFLINE"
 server_save = None
 server_instance = None
@@ -45,8 +46,11 @@ async def server(ctx, action='', save=None):
     if action == "start":
         if save:
             await ctx.send(f"```fix\nStarting Factorio server with save: '{save}'\n```")
-            server_instance = subprocess.Popen(["../factorio", "--start-server", f"../saves/{save}.zip", "--server-settings", "./server-settings.json"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            server_instance.poll()
+            server_instance = subprocess.Popen(f"..\\factorio.exe --start-server ..\\saves\\{save}.zip --server-settings .\\server-settings.json", shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
+            # server_instance = subprocess.Popen(["../factorio.exe", "--start-server", f"../saves/{save}.zip", "--server-settings", "./server-settings.json"], shell=True, stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
+            # server_instance.poll()
+            # (output, err) = server_instance.communicate()
+            # print(output)
             await asyncio.sleep(9)
             print("Server Up")
             server_save = save
@@ -55,8 +59,8 @@ async def server(ctx, action='', save=None):
             await ctx.send("```xl\n'SERVER ONLINE'\n```")
         elif server_save:
             await ctx.send(f"```fix\nStarting Factorio server with save: '{server_save}'\n```")
-            server_instance = subprocess.Popen(["../factorio", "--start-server", f"../saves/{server_save}.zip", "--server-settings", "./server-settings.json"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            server_instance.poll()
+            server_instance = subprocess.Popen(["../factorio.exe", "--start-server", f"../saves/{server_save}.zip", "--server-settings", "./server-settings.json"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            # server_instance.poll()
             await asyncio.sleep(7)
             print("Server Up")
             server_status = "ONLINE"
@@ -67,7 +71,7 @@ async def server(ctx, action='', save=None):
 
     elif action == "stop" and server_status == "ONLINE":
         await ctx.send(f"```fix\nStopping Factorio server\n```")
-        server_instance.stdin.write('/c game.server_save()')
+        server_instance.stdin.write(b'/c game.server_save()')
         server_instance.stdin.flush()
         await asyncio.sleep(2)
         server_instance.kill()
@@ -125,5 +129,17 @@ async def teleport(ctx, *args):
     if server_status == "OFFLINE":
         await ctx.send(f"```prolog\nERROR: SERVER OFFLINE\n```")
 
+@bot.command(aliases=["l"])
+async def log(ctx):
+    global server_instance
+    if server_status == "ONLINE":
+        print("Logs created")
+
+        for stdout_line in iter(server_instance.stdout.readline, ""):
+            print(stdout_line) 
+        # server_instance.stdout.close() 
+
+    if server_status == "OFFLINE":
+        await ctx.send(f"```prolog\nERROR: SERVER OFFLINE\n```")
 
 bot.run(TOKEN)
